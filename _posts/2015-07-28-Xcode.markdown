@@ -1,0 +1,213 @@
+---
+layout: post
+title: "如何让Xcode打印日志中的unicode显示为中文"
+date: 2015-07-28
+comments: true
+categories: iOS
+tags: [Xcode]
+keywords: Xcode unicode 添加分类
+description:  Xcode打印日志
+---
+ Xcode打印日志有时候显示的unicode,不是我们想要的中文，尤其是与后台调试接口的时候，面对乱麻麻的unicode,那是一个苦逼啊。
+ 
+###解决方案
+
+为NSObject,NSString,NSDictionary,NSArray,NSSet添加分类
+.h文件中
+
+{% highlight ruby %}
+@interface debugging : NSObject
+
+@end
+
+@interface NSObject (DEBUGGING)
++ (void)replaceClassMethodWithClass: (Class)clazz originMethod: (SEL)originMethodSEL withMethod: (SEL)newMethodSEL;
+@end
+
+@interface NSString (DEBUGGING)
++ (NSString*) stringByReplaceUnicode:(NSString*)string;
+@end
+
+@interface NSDictionary (DEBUGING)
+@end
+
+@interface NSArray (DEBUGGING)
+@end
+
+@interface NSSet (DEBUGGING)
+@end
+
+{% endhighlight %}
+
+.m文件中
+
+{% highlight ruby %}
+@implementation NSObject (DEBUGGING)
++ (void)replaceClassMethodWithClass: (Class)clazz originMethod: (SEL)originMethodSEL withMethod: (SEL)newMethodSEL
+{
+Method originMethod = class_getInstanceMethod(clazz, originMethodSEL);
+Method newMethod = class_getInstanceMethod(clazz, newMethodSEL);
+method_exchangeImplementations(originMethod, newMethod);
+}
+@end
+{% endhighlight %}
+
+{% highlight ruby %}
+@implementation NSString (DEBUGGING)
+
+//http://stackoverflow.com/questions/2099349/using-objective-c-cocoa-to-unescape-unicode-characters-ie-u1234?lq=1
++ (NSString*) stringByReplaceUnicode:(NSString*)string
+{
+// unescape quotes and backwards slash
+NSString* unescapedString = [string stringByReplacingOccurrencesOfString:@"\\\"" withString:@"\""];
+unescapedString = [unescapedString stringByReplacingOccurrencesOfString:@"\\\\" withString:@"\\"];
+
+// tokenize based on unicode escape char
+NSMutableString* tokenizedString = [NSMutableString string];
+NSScanner* scanner = [NSScanner scannerWithString:unescapedString];
+while ([scanner isAtEnd] == NO)
+{
+// read up to the first unicode marker
+// if a string has been scanned, it's a token
+// and should be appended to the tokenized string
+NSString* token = @"";
+[scanner scanUpToString:@"\\u" intoString:&token];
+if (token != nil && token.length > 0)
+{
+[tokenizedString appendString:token];
+continue;
+}
+// skip two characters to get past the marker
+// check if the range of unicode characters is
+// beyond the end of the string (could be malformed)
+// and if it is, move the scanner to the end
+// and skip this token
+NSUInteger location = [scanner scanLocation];
+NSInteger extra = scanner.string.length - location - 4 - 2;
+if (extra < 0)
+{
+NSRange range = {location, -extra};
+[tokenizedString appendString:[scanner.string substringWithRange:range]];
+[scanner setScanLocation:location - extra];
+continue;
+}
+// move the location pas the unicode marker
+// then read in the next 4 characters
+location += 2;
+NSRange range = {location, 4};
+token = [scanner.string substringWithRange:range];
+unichar codeValue = (unichar) strtol([token UTF8String], NULL, 16);
+[tokenizedString appendString:[NSString stringWithFormat:@"%C", codeValue]];
+// move the scanner past the 4 characters
+// then keep scanning
+location += 4;
+[scanner setScanLocation:location];
+}
+// done
+return tokenizedString;
+}
+@end
+}
+@end
+{% endhighlight %}
+{% highlight ruby %}
+@implementation NSDictionary (DEBUGING)
+
++ (void)load
+{
+[self replaceClassMethodWithClass:[NSDictionary class] originMethod:@selector(description) withMethod:@selector(Exchangeddescription)];
+[self replaceClassMethodWithClass:[NSDictionary class] originMethod:@selector(descriptionWithLocale:) withMethod:@selector(ExchangeddescriptionWithLocale:)];
+[self replaceClassMethodWithClass:[NSDictionary class] originMethod:@selector(descriptionWithLocale:indent:) withMethod:@selector(ExchangeddescriptionWithLocale:indent:)];
+}
+
+- (NSString *)Exchangeddescription
+{
+NSString * description = [self Exchangeddescription];
+description = [NSString stringByReplaceUnicode:description];
+return description;
+}
+- (NSString *)ExchangeddescriptionWithLocale:(id)locale
+{
+NSString * description = [self ExchangeddescriptionWithLocale:locale];
+description = [NSString stringByReplaceUnicode:description];
+return description;
+}
+- (NSString *)ExchangeddescriptionWithLocale:(id)locale indent:(NSUInteger)level
+{
+NSString * description = [self ExchangeddescriptionWithLocale:locale indent:level];
+description = [NSString stringByReplaceUnicode:description];
+return description;
+}
+@end
+{% endhighlight %}
+
+{% highlight ruby %}
+@implementation NSArray (DEBUGGING)
+
++ (void)load
+{
+[self replaceClassMethodWithClass:[NSArray class] originMethod:@selector(description) withMethod:@selector(Exchangeddescription)];
+[self replaceClassMethodWithClass:[NSArray class] originMethod:@selector(descriptionWithLocale:) withMethod:@selector(ExchangeddescriptionWithLocale:)];
+[self replaceClassMethodWithClass:[NSArray class] originMethod:@selector(descriptionWithLocale:indent:) withMethod:@selector(ExchangeddescriptionWithLocale:indent:)];
+}
+- (NSString *)Exchangeddescription
+{
+NSString * description = [self Exchangeddescription];
+description = [NSString stringByReplaceUnicode:description];
+return description;
+}
+- (NSString *)ExchangeddescriptionWithLocale:(id)locale
+{
+NSString * description = [self ExchangeddescriptionWithLocale:locale];
+description = [NSString stringByReplaceUnicode:description];
+return description;
+}
+- (NSString *)ExchangeddescriptionWithLocale:(id)locale indent:(NSUInteger)level
+{
+NSString * description = [self ExchangeddescriptionWithLocale:locale indent:level];
+description = [NSString stringByReplaceUnicode:description];
+return description;
+}
+@end
+{% endhighlight %}
+
+{% highlight ruby %}
+@implementation NSSet (DEBUGGING)
++ (void)load
+{
+[self replaceClassMethodWithClass:[NSSet class] originMethod:@selector(description) withMethod:@selector(Exchangeddescription)];
+[self replaceClassMethodWithClass:[NSSet class] originMethod:@selector(descriptionWithLocale:) withMethod:@selector(ExchangeddescriptionWithLocale:)];
+}
+- (NSString *)Exchangeddescription
+{
+NSString * description = [self Exchangeddescription];
+description = [NSString stringByReplaceUnicode:description];
+return description;
+}
+- (NSString *)ExchangeddescriptionWithLocale:(id)locale
+{
+NSString * description = [self ExchangeddescriptionWithLocale:locale];
+description = [NSString stringByReplaceUnicode:description];
+return description;
+}
+@end
+{% endhighlight %}
+
+###最后
+方法中用到了运行时，别忘记了:
+
+{% highlight ruby %}
+#import <objc/runtime.h>
+{% endhighlight %}
+
+把该分类文件导入到项目中就OK了。
+参考了文章(http://t.cn/RLJLjnx)
+###效果
+Before:
+![image](/images/Tool/tool_3.png)
+After:
+![image](/images/Tool/tool_4.png)
+
+
+
+

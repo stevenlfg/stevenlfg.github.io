@@ -1,0 +1,232 @@
+---
+layout: post
+title: "Mantle的初步使用"
+date: 2015-08-17
+comments: true
+categories: iOS
+tags: [Mantle]
+keywords: Mantle 模型 对象
+description:  Mantle的初步使用
+---
+ Mantle 是一个iOS模型框架，它可以简便的创建对象模型，当然也可以把模型转变成JSON,在处理远程接口时，这特别有用。
+ 我们来看一看MTLModel, MTLJSONAdapter的实现，或许在你的下一个项目中，你会考虑使用Mantle.
+
+##MTLModel
+
+ MTLModel提供了一种简单的方法来映射NSDictionary对象和Objective-C类,反之亦然。
+ 开始之前，我们看一个简单的例子，假设我们得到以下从服务器返回来的JSON,我们想要创建和填充我们的(未设立)CATProfile模型类。
+ 
+{% highlight ruby %}
+{
+  "id": 1,
+  "name": "Objective Cat",
+  "birthday": "2013-09-12 13:29:36 +0100",
+  "website": "http://objc.at",
+  "location": { "lat": "48.2083", "lon": "16.3731" },
+  "relationship_status": "single",
+  "awesome": true
+}
+{% endhighlight %}
+
+ 接下来我们创建一个MTLModel子类来代表上面的JSON对象。
+
+{% highlight ruby %}
+// CATProfile.h
+typedef NS_ENUM(NSInteger, CATRelationshipStatus) {
+CATRelationshipStatusSingle = 0,
+CATRelationshipStatusInRelationship,
+CATRelationshipStatusComplicated
+};
+
+@interface CATProfile : MTLModel<MTLJSONSerializing>
+
+@property(strong, nonatomic) NSNumber *profileId;
+@property(strong, nonatomic) NSString *name;
+@property(strong, nonatomic) NSDate *birthday;
+@property(strong, nonatomic) NSURL *website;
+@property(nonatomic) CLLocationCoordinate2D locationCoordinate;
+@property(nonatomic) CATRelationshipStatus relationshipStatus;
+@property(nonatomic, getter=isAwesome) BOOL awesome;
+
+@end
+{% endhighlight %}
+
+CATProfile类继承MTLModel并且遵守MTLJSONSerializing协议,这个协议要求我们实现以下方法:
+
+{% highlight ruby %}
++ (NSDictionary *)JSONKeyPathsByPropertyKey;
+{% endhighlight %}
+
+
+具体实现
+{% highlight ruby %}
+// CATProfile.m
+@implementation
+
++ (NSDictionary *)JSONKeyPathsByPropertyKey {
+// properties defined in header < : > key in JSON Dictionary
+return @{
+         @"profileId":          @"id",
+         @"websiteURL":         @"website",
+         @"locationCoordinate": @"location",
+         @"relationshipStatus": @"relationship_status",
+};
+}
+
+@end
+{% endhighlight %}
+
++JSONKeyPathsByPropertyKey返回一个字典,它的每个模型属性的键值对都是和JSON值匹配的,这样可以使Mantle知道哪个JSON键用
+来填充特定的模型属性。
+很显然，三个属性name,birthday,awesome不在列表里,如果一个属性不在字典列表中,Mantle将会自动从JSON中寻找一个和其名字相同的key作为属性定义在header中。
+
+###NSValueTransformer
+
+Mantle默认可以处理任意类型的转换,如NSString and NSNumber,然而对于一些特殊的类型列如:NSURL,enums,以及自定义结构CLLocationCoordinate2D需要做些特殊的处理。
+Mantle很大程度上依赖于Foundation中的NSValueTransformer帮助，而NSValueTransformer可以很好的映射Objective-C对象中实际的属性和JSON中所代表的数据。
+
+为一个模型属性创建特定的transformer，我么需要实现一个类方法+<propertyName>JSONTransformer，它返回我们期望的类型格式。
+
+{% highlight ruby %}
+// mapping birthday to NSDate and vice-versa
++ (NSValueTransformer *)birthdayJSONTransformer {
+return [MTLValueTransformer reversibleTransformerWithForwardBlock:^(NSString *dateString) {
+return [self.dateFormatter dateFromString:dateString];
+} reverseBlock:^(NSDate *date) {
+return [self.dateFormatter stringFromDate:date];
+}];
+}
+
++ (NSDateFormatter *)dateFormatter {
+NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+dateFormatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
+dateFormatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+
+return dateFormatter;
+}
+{% endhighlight %}
+
+Mantle调用这个方法时是通过runtime来决定怎样转换birthday属性,前一个block把字符串转换成NSDate对象,后一个block把NSDate对象转换成字符串。
+
+下面列车了一些值得我们注意的特殊格式属性的转换方法，以供参考:
+
+NSURL ↔︎ JSON string
+{% highlight ruby %}
++ (NSValueTransformer *)websiteURLJSONTransformer {
+return [NSValueTransformer valueTransformerForName:MTLURLValueTransformerName];
+}
+{% endhighlight %}
+
+CLLocationCoordinate2D ↔︎ JSON object
+{% highlight ruby %}
++ (NSValueTransformer *)locationCoordinateJSONTransformer {
+return [MTLValueTransformer reversibleTransformerWithForwardBlock:^(NSDictionary *coordinateDict) {
+CLLocationDegrees latitude = [coordinateDict[@"lat"] doubleValue];
+CLLocationDegrees longitude = [coordinateDict[@"lon"] doubleValue];
+return [NSValue valueWithMKCoordinate:CLLocationCoordinate2DMake(latitude, longitude)];
+} reverseBlock:^(NSValue *coordinateValue) {
+CLLocationCoordinate2D coordinate = [coordinateValue MKCoordinateValue];
+return @{@"lat": @(coordinate.latitude), @"lon": @(coordinate.longitude)};
+}];
+}
+{% endhighlight %}
+
+enum ↔︎ JSON string
+{% highlight ruby %}
++ (NSValueTransformer *)relationshipStatusJSONTransformer {
+return [NSValueTransformer mtl_valueMappingTransformerWithDictionary:@{
+@"single": @(CATRelationshipStatusSingle),
+@"relationship": @(CATRelationshipStatusInRelationship),
+@"complicated": @(CATRelationshipStatusComplicated)
+}];
+}
+{% endhighlight %}
+
+BOOL ↔︎ JSON boolean
+{% highlight ruby %}
++ (NSValueTransformer *)awesomeJSONTransformer {
+return [NSValueTransformer valueTransformerForName:MTLBooleanValueTransformerName];
+}
+{% endhighlight %}
+
+##由JSON创建模型
+
+{% highlight ruby %}
+// create NSDictionary from JSON data
+NSData JSONData = ... // the JSON response from the API
+NSDictionary *JSONDict = [NSJSONSerialization JSONObjectWithData:JSONData options:0 error:NULL];
+
+// create model object from NSDictionary using MTLJSONSerialisation
+CATProfile *profile = [MTLJSONAdapter modelOfClass:CATProfile.class fromJSONDictionary:JSONDict error:NULL];
+{% endhighlight %}
+##由模型创建JSON
+{% highlight ruby %}
+// create NSDictionary from model class using MTLJSONSerialisation
+CATProfile *profile = ...
+NSDictionary *profileDict = [MTLJSONAdapter JSONDictionaryFromModel:profile];
+
+// convert NSDictionary to JSON data
+NSData *JSONData = [NSJSONSerialization dataWithJSONObject:profileDict options:0 error:NULL];
+
+{% endhighlight %}
+
+##映射多个数组和多个字典
+大多时候，模型数据之间都是有关联的，这些关联通常表示是通过JSON数组或对象(列如:owner and friends)。
+{% highlight ruby %}
+{
+  "id": 1,
+  "name": "Objective Cat",
+  ...,
+
+  "owner": {
+  "id": 99,
+  "name": "Alexander Schuch"
+ },
+  "friends": [
+ {
+  "name": "Owly",
+  "type": "bird"
+ },
+ {
+  "name": "Hedgy",
+  "type": "mammal"
+ }
+]
+}
+{% endhighlight %}
+Mantle支持将这些关系映射到新的模式，为了确保Mantle知道怎样转换这些关系，我们可以运用以下关于NSValueTransformer的方法:
+{% highlight ruby %}
++ (NSValueTransformer *)mtl_JSONDictionaryTransformerWithModelClass:(Class)modelClass;
++ (NSValueTransformer *)mtl_JSONArrayTransformerWithModelClass:(Class)modelClass;
+{% endhighlight %}
+
+当然,Mantle需要知道这些关系和它的MTLModel子类应该转变，简单的方法就是创建一个新的MTLModel子类，并且为那些应该映射的对象实现MTLJSONSerializing协议，
+我们可以为CATProfile添加一些新的属性,并且实现转换。
+
+{% highlight ruby %}
+// CATProfile.h
+@property(strong, nonatomic) CATOwner *owner;   // CATOwner is a MTLModel subclass
+@property(strong, nonatomic) NSArray *friends;  // Array of CATFriend objects
+
+// CATProfile.m
++ (NSValueTransformer *)ownerJSONTransformer {
+return [NSValueTransformer mtl_JSONDictionaryTransformerWithModelClass:CATOwner.class];
+}
+
++ (NSValueTransformer *)friendsJSONTransformer {
+return [NSValueTransformer mtl_JSONArrayTransformerWithModelClass:CATFriend.class];
+}
+{% endhighlight %}
+
+##最后
+
+在处理JSON API时，Mantle是个不错的选择，然而，要意识到它不太适合处理特别复杂并且无规则的API。
+文章翻译自[OBJECTIVE CAT](http://www.objc.at/mantle),感谢原作者！
+
+更多关于Mantle的文章请参考:
+
+[使用Mantle处理Model层对象](http://blog.codingcoder.com/use-mantle-to-model/)
+
+[Mantle](http://bawn.github.io/ios/2014/12/11/Mantle.html)
+
+[为什么唱吧iOS 6.0选择了Mantle](http://www.iwangke.me/2014/10/13/Why-Changba-iOS-choose-Mantle/)

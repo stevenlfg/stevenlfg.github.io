@@ -1,8 +1,8 @@
 # Basic
-title: stevenLee
+title: Jerry Lee
 subtitle: stay hungry,stay young.
 welcome_message: <a href="https://github.com/onevcat/vno-jekyll" target="_blank">Download the theme</a>
-description: Vno Jekyll is a port of my Ghost theme vno.
+description: Welcome to my world.
 creator: <a href="http://onev.cat">@onevcat</a>
 
 url: "http://vno.onevcat.com"
@@ -37,11 +37,9 @@ comment:
     
 # Social
 social:
-    weibo: onevcat
-    github: onevcat
-    twitter: onevcat
-    gplus: 107108267983477358170
-    mail: onev@onevcat.com
+    weibo: 逍遥两冰人
+    github: stevenlfg
+    mail: steven.li@zhangmen.com
 
 # Google Analytics
 ga:
