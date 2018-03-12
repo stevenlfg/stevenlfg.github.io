@@ -1,11 +1,11 @@
 # Basic
 title: Jerry Lee
 subtitle: stay hungry,stay young.
-welcome_message: <a href="https://github.com/onevcat/vno-jekyll" target="_blank">Download the theme</a>
+#welcome_message: <a href="https://github.com/onevcat/vno-jekyll" target="_blank">Download the theme</a>
 description: Welcome to my world.
 creator: <a href="http://onev.cat">@onevcat</a>
 
-url: "http://vno.onevcat.com"
+url: "https://stevenlfg.github.io/"
 
 permalink: /:year/:month/:title/
 
@@ -17,12 +17,12 @@ cover_color: red
 
 # The blog button should not be removed.
 blog_button:
-    title: Blog
+    title: 博客
     description: Visit blog
 
 # Navigation buttons in the front page.
 nav:
-    - {title: Projects, description: My Projects, url: 'http://project.onevcat.com'}
+    - {title: 关于, description: 关于, url: './about'}
     # - {title: Another Button, description: A button, url: 'http://example.com'}
 
 # Pagination
@@ -37,7 +37,6 @@ comment:
     
 # Social
 social:
-    weibo: 逍遥两冰人
     github: stevenlfg
     mail: steven.li@zhangmen.com
 
