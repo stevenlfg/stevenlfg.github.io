@@ -80,7 +80,7 @@ return @{
 来填充特定的模型属性。
 很显然，三个属性name,birthday,awesome不在列表里,如果一个属性不在字典列表中,Mantle将会自动从JSON中寻找一个和其名字相同的key作为属性定义在header中。
 
-###NSValueTransformer
+### NSValueTransformer
 
 Mantle默认可以处理任意类型的转换,如NSString and NSNumber,然而对于一些特殊的类型列如:NSURL,enums,以及自定义结构CLLocationCoordinate2D需要做些特殊的处理。
 Mantle很大程度上依赖于Foundation中的NSValueTransformer帮助，而NSValueTransformer可以很好的映射Objective-C对象中实际的属性和JSON中所代表的数据。

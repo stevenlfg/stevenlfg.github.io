@@ -9,7 +9,7 @@ keywords: CALayer 绘图
 description:  iOS动画总结
 --- 
 
-###CALayer
+### CALayer
 CALayer简介
 
 在iOS系统中，能看见摸得着的东西基本上都是UIView,UIView是iOS系统中界面元素的基础，所有的界面元素都是继承自它。比如一个文本标签，一个按钮等等，这些都是UIView。其实UIView之所以能显示在屏幕上，完全是因为它内部的一个层。在创建UIView对象时，UIView内部会自动创建一个层(即CALayer对象),通过UIView的layer属性可以访问这个层。当UIView需要显示到屏幕上时，会调用drawRect：方法进行绘图，并且会将所有内容绘制在自己的层上，绘图完毕后，系统会将层拷贝到屏幕上，于是就完成了UIView的显示，也就是说UIView本身不具备显示的功能，是它内部的层才有显示功能。
@@ -126,7 +126,7 @@ position：图层中心点位置，类似于UIView的center
 
 隐式属性动画的本质是这些属性的变动默认隐含了CABasicAnimation动画实现。
 
-###Core Animation
+### Core Animation
 iOS中实现一个动画相当简单，只要调用UIView的块代码即可实现一个动画效果。
 {% highlight ruby %}
 + (void)animateWithDuration:(NSTimeInterval)duration delay:(NSTimeInterval)delay options:(UIViewAnimationOptions)options animations:(void (^)(void))animations completion:(void (^)(BOOL finished))completion NS_AVAILABLE_IOS(4_0);
@@ -150,7 +150,7 @@ iOS中实现一个动画相当简单，只要调用UIView的块代码即可实�
 控制动画的暂定？如何进行动画的组合？这就需要了解iOS的核心动画Core Animation(包含在Quartz Core框架中)。
 在iOS核心动画分为几类:基础动画、关键帧动画、动画组、转场动画。
 
-####基础动画
+#### 基础动画
 
 动画创建一个分为以下几步:
 
@@ -214,7 +214,7 @@ animation设置beginTime为2，则表示这个animation在animation开始的2秒
 +(instancetype)animationWithKeyPath:(NSString *)path;表示需要修改的Layer属性，例如"position","tansform.scale",可以对哪些属性进行修改，可以参考官方文档。timingFunction是至动画的时间函数，就是个简单的贝塞尔曲线。
 四类时间函数简单点理解就是动画是匀速的(kCAMediaTimingFunctionLinear),还是先快后慢(kCAMediaTimingFunctionEaseOut),还是先慢后快(kCAMediaTimingFunctionEaseIn),还是慢快慢(kCAMediaTimingFunctionEaseInEaseOut).
 
-####关键帧动画
+#### 关键帧动画
 关键帧动画就是在动画控制过程中开发者指定主要的动画状态，至于各个状态间动画如何进行则由系统自动运算补充(每两个关键帧之间系统形成的动画称之为“补充动画”)，这种动画的好处就是开发者不用逐个控制每个动画帧，而只要关心几个关键帧的状态即可。
 
 关键帧动画开发分为两种形式:一种是通过设置不同的属性进行关键帧控制，另一种是通过绘制路径进行关键帧控制。后者优先级高于前者，如果设置了路径则属性值
@@ -266,7 +266,7 @@ keyTimes：各个关键帧的时间控制。前面使用values设置了四个关
 第二帧占用时间4秒，从第二帧到第三帧时间为2秒，而从第三帧到第四帧时间2秒的话，就可以通过keyTimes进行设置。keyTimes中存储的是时间占用比例点，
 此时可以设置keyTimes的值为0.0,0.5,0.75,1.0,也就是说1到2帧运行到总时间的50%，2到3帧运行到总时间的75%，3到4帧运行到8秒结束。
 
-####动画组
+#### 动画组
 实际开发中一个物体的运动往往是复活运动，单一属性的运动情况比较少，但恰恰属性动画每次进行动画设置时一次只能设置一个属性进行动画控制(不管是基础动画
 还是关键帧动画都是如此)，这样一来要做一个复合运动的动画就必须创建多个属性动画进行组合。对于一两种动画的组合或许处理起来还比较容易，但是对于更多
 动画的组合控制往往变得很复杂，动画组的产生就是基于这样一种情况而产生的。动画组是一系列动画的组合，凡是添加到动画组中的动画都受控与动画组，这样一来

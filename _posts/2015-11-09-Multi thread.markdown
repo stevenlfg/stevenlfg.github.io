@@ -12,7 +12,7 @@ description:  多线程总结
 iOS多线程的使用对于App性能优化有很重要的意义。使用线程可以把程序中占据时间长的任务放到后台去处理，如图片、视频的下载。
 发挥多核处理器的优势，并发执行让系统运行的更快、更流畅，用户体验更好。总结一下iOS里面常用的三种线程编程的技术。
 
-###NSThread
+### NSThread
 
 这种方案是经过苹果封装后的，并且完全面向对象的。可以直接操控线程对象，非常直观和方便。但是它的生命周期还是需要我们手动管理。
 使用NSThread创建有以下几种方式:
@@ -43,7 +43,7 @@ NSThread* aThread = [[NSThread alloc] initWithTarget:self selector:@selector(thr
 如果需要，可以设置线程的优先级(-setThreadPriority：)；如果要在线程中保存一些状态信息，还可以用到-threadDictionary得到一个NSMutableDictionary,以
 key-value的方式保存信息于线程内读写。
 
-###NSOperation
+### NSOperation
 
 NSOperation本身是一个抽象类，定义要执行的工作，NSOperationQueue是一个工作队列，当工作加入到队列后，NSOperationQueue会自动按照优先顺序及工作的从属
 依赖关系(如果有的话）组织执行。NSOperation是没法直接使用的，它只是提供了一个工作的基本逻辑，具体实现还是需要你通过定义自己的NSOperation子类来活得。如果
@@ -137,7 +137,7 @@ NSLog(@"Beginning operation.\n");
 }];
 {% endhighlight %}
 
-###GCD
+### GCD
 
 GCD(Grand Central Dispatch),是一组用于实现并发编程的C接口。GCD是基于Objective-C的block特性开发的，基本业务逻辑和NSOperation很像，都是
 将工作添加到一个队列，由系统来负责线程的生成和调度。由于直接使用Block,因此此NSOperation子类使用起来更方便，大大降低了多线程开发的门槛。

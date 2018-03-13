@@ -10,7 +10,7 @@ description:  Xcode打印日志
 ---
  Xcode打印日志有时候显示的unicode,不是我们想要的中文，尤其是与后台调试接口的时候，面对乱麻麻的unicode,那是一个苦逼啊。
  
-###解决方案
+### 解决方案
 
 为NSObject,NSString,NSDictionary,NSArray,NSSet添加分类
 .h文件中
@@ -193,7 +193,7 @@ return description;
 @end
 {% endhighlight %}
 
-###最后
+### 最后
 方法中用到了运行时，别忘记了:
 
 {% highlight ruby %}
@@ -202,7 +202,7 @@ return description;
 
 把该分类文件导入到项目中就OK了。
 参考了文章(http://t.cn/RLJLjnx)
-###效果
+### 效果
 Before:
 ![image](/images/Tool/tool_3.png)
 After:
