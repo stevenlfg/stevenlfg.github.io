@@ -32,6 +32,7 @@ description:  技术自我提升
 ### 工具性脚本
    
    Shell:Linux命令行与shell脚本编程大全
+   
    Python:廖雪峰的python
 
 ### 算法与数据结构
