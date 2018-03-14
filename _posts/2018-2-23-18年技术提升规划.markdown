@@ -18,7 +18,7 @@ description:  技术自我提升
    
    Objective-C高级编程 iOS与OS X多线程与内存管理
    
-   [iOS Core Animation Advanced Techniques] (https://github.com/AttackOnDobby/iOS-Core-Animation-Advanced-Techniques)
+   [iOS Core Animation Advanced Techniques](https://github.com/AttackOnDobby/iOS-Core-Animation-Advanced-Techniques)
   
 ### 计算机基础
   
