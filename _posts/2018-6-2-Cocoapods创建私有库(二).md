@@ -49,7 +49,7 @@ pod repo remove **
 
 当然我们还可以通过一下命令添加回来。
 
-pod repo add ** git@coding.net:**/**.git
+pod repo add ** git@coding.net:** / **.git
 
 
 
